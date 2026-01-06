@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  firstName     String?   @map("first_name")
+  lastName      String?   @map("last_name")
+  avatar        String?
+  isActive      Boolean   @default(true) @map("is_active")
+  isVerified    Boolean   @default(false) @map("is_verified")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  sessions      Session[]
+  portfolios    Portfolio[]
+  watchlists    Watchlist[]
+  alerts        Alert[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  token      String   @unique
+  userAgent  String?  @map("user_agent")
+  ipAddress  String?  @map("ip_address")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// ============================================
+// PORTFOLIO & HOLDINGS
+// ============================================
+
+model Portfolio {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  currency    String   @default("USD")
+  isDefault   Boolean  @default(false) @map("is_default")
+  cashBalance Float    @default(0) @map("cash_balance")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings    Holding[]
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("portfolios")
+}
+
+model Holding {
+  id           String   @id @default(uuid())
+  portfolioId  String   @map("portfolio_id")
+  symbol       String
+  shares       Float
+  avgCostBasis Float    @map("avg_cost_basis")
+  sector       String?
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  portfolio    Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioId, symbol])
+  @@index([portfolioId])
+  @@index([symbol])
+  @@map("holdings")
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  portfolioId String   @map("portfolio_id")
+  symbol      String
+  type        String   // buy, sell, dividend
+  shares      Float?
+  price       Float?
+  amount      Float
+  fees        Float    @default(0)
+  notes       String?
+  executedAt  DateTime @map("executed_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  portfolio   Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioId])
+  @@index([symbol])
+  @@index([executedAt])
+  @@map("transactions")
+}
+
+// ============================================
+// WATCHLIST
+// ============================================
+
+model Watchlist {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       WatchlistItem[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("watchlists")
+}
+
+model WatchlistItem {
+  id          String   @id @default(uuid())
+  watchlistId String   @map("watchlist_id")
+  symbol      String
+  targetPrice Float?   @map("target_price")
+  notes       String?
+  addedAt     DateTime @default(now()) @map("added_at")
+
+  // Relations
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+
+  @@unique([watchlistId, symbol])
+  @@index([watchlistId])
+  @@map("watchlist_items")
+}
+
+// ============================================
+// ALERTS
+// ============================================
+
+model Alert {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  symbol      String?
+  type        String    // price_above, price_below, percent_change
+  condition   String    // JSON: { target: 150, ... }
+  message     String?
+  isActive    Boolean   @default(true) @map("is_active")
+  isTriggered Boolean   @default(false) @map("is_triggered")
+  triggeredAt DateTime? @map("triggered_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([symbol])
+  @@index([isActive])
+  @@map("alerts")
+}
+
+// ============================================
+// MARKET DATA CACHE
+// ============================================
+
+model StockQuote {
+  symbol        String   @id
+  name          String?
+  exchange      String?
+  sector        String?
+  industry      String?
+  price         Float
+  previousClose Float?   @map("previous_close")
+  open          Float?
+  high          Float?
+  low           Float?
+  volume        BigInt?
+  marketCap     BigInt?  @map("market_cap")
+  peRatio       Float?   @map("pe_ratio")
+  dividend      Float?
+  dividendYield Float?   @map("dividend_yield")
+  week52High    Float?   @map("week_52_high")
+  week52Low     Float?   @map("week_52_low")
+  changeAmount  Float?   @map("change_amount")
+  changePercent Float?   @map("change_percent")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("stock_quotes")
+}
