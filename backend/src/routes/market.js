@@ -1,88 +1,37 @@
 const express = require('express');
-const yahooFinance = require('yahoo-finance2').default;
 const { PrismaClient } = require('@prisma/client');
+const stockData = require('../services/stockData');
 
 const router = express.Router();
 const prisma = new PrismaClient();
-
-// Cache for quotes (5 second TTL)
-const quoteCache = new Map();
-const CACHE_TTL = 5000;
 
 // GET /api/market/quote/:symbol
 router.get('/quote/:symbol', async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
+    const quote = await stockData.getQuote(symbol);
 
-    // Check cache
-    const cached = quoteCache.get(symbol);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      return res.json(cached.data);
+    if (!quote) {
+      return res.status(404).json({ error: 'Symbol not found' });
     }
 
-    // Fetch from Yahoo Finance
-    const quote = await yahooFinance.quote(symbol);
-
-    const data = {
+    res.json({
       symbol: quote.symbol,
-      name: quote.shortName || quote.longName,
-      price: quote.regularMarketPrice,
-      change: quote.regularMarketChange,
-      changePercent: quote.regularMarketChangePercent,
-      previousClose: quote.regularMarketPreviousClose,
-      open: quote.regularMarketOpen,
-      high: quote.regularMarketDayHigh,
-      low: quote.regularMarketDayLow,
-      volume: quote.regularMarketVolume,
-      marketCap: quote.marketCap,
-      peRatio: quote.trailingPE,
-      week52High: quote.fiftyTwoWeekHigh,
-      week52Low: quote.fiftyTwoWeekLow,
+      name: quote.name,
+      price: quote.price,
+      change: quote.changeAmount,
+      changePercent: quote.changePercent,
+      previousClose: quote.previousClose,
+      open: quote.open,
+      high: quote.high,
+      low: quote.low,
+      volume: quote.volume ? Number(quote.volume) : null,
+      marketCap: quote.marketCap ? Number(quote.marketCap) : null,
+      peRatio: quote.peRatio,
+      week52High: quote.week52High,
+      week52Low: quote.week52Low,
       dividendYield: quote.dividendYield
-    };
-
-    // Update cache
-    quoteCache.set(symbol, { data, timestamp: Date.now() });
-
-    // Update database cache
-    await prisma.stockQuote.upsert({
-      where: { symbol },
-      update: {
-        name: data.name,
-        price: data.price,
-        previousClose: data.previousClose,
-        open: data.open,
-        high: data.high,
-        low: data.low,
-        volume: data.volume ? BigInt(data.volume) : null,
-        marketCap: data.marketCap ? BigInt(data.marketCap) : null,
-        peRatio: data.peRatio,
-        week52High: data.week52High,
-        week52Low: data.week52Low,
-        dividendYield: data.dividendYield,
-        changeAmount: data.change,
-        changePercent: data.changePercent
-      },
-      create: {
-        symbol,
-        name: data.name,
-        price: data.price,
-        previousClose: data.previousClose,
-        open: data.open,
-        high: data.high,
-        low: data.low,
-        volume: data.volume ? BigInt(data.volume) : null,
-        marketCap: data.marketCap ? BigInt(data.marketCap) : null,
-        peRatio: data.peRatio,
-        week52High: data.week52High,
-        week52Low: data.week52Low,
-        dividendYield: data.dividendYield,
-        changeAmount: data.change,
-        changePercent: data.changePercent
-      }
-    }).catch(() => {}); // Ignore cache errors
-
-    res.json(data);
+    });
   } catch (error) {
     console.error('[Quote Error]', error.message);
     res.status(500).json({ error: 'Failed to fetch quote' });
@@ -102,27 +51,60 @@ router.get('/quotes', async (req, res) => {
       return res.status(400).json({ error: 'Max 50 symbols allowed' });
     }
 
-    const quotes = await Promise.all(
-      symbols.map(async (symbol) => {
-        try {
-          const quote = await yahooFinance.quote(symbol);
-          return {
-            symbol: quote.symbol,
-            name: quote.shortName,
-            price: quote.regularMarketPrice,
-            change: quote.regularMarketChange,
-            changePercent: quote.regularMarketChangePercent
-          };
-        } catch {
-          return { symbol, error: 'Failed to fetch' };
-        }
-      })
-    );
+    const quotes = await stockData.getQuotes(symbols);
 
-    res.json(quotes);
+    const result = symbols.map(symbol => {
+      const q = quotes[symbol];
+      if (q) {
+        return {
+          symbol: q.symbol,
+          name: q.name,
+          price: q.price,
+          change: q.changeAmount,
+          changePercent: q.changePercent
+        };
+      }
+      return { symbol, error: 'Failed to fetch' };
+    });
+
+    res.json(result);
   } catch (error) {
     console.error('[Quotes Error]', error);
     res.status(500).json({ error: 'Failed to fetch quotes' });
+  }
+});
+
+// GET /api/market/history/:symbol - Get historical data (fetches and stores 5 years)
+router.get('/history/:symbol', async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const days = parseInt(req.query.days) || 365 * 5; // Default 5 years
+    const forceRefresh = req.query.refresh === 'true';
+
+    console.log(`[Market] Getting history for ${symbol}, days=${days}, refresh=${forceRefresh}`);
+
+    const history = await stockData.getHistoricalData(symbol, { days, forceRefresh });
+
+    res.json({
+      symbol,
+      count: history.length,
+      data: history
+    });
+  } catch (error) {
+    console.error('[History Error]', error.message);
+    res.status(500).json({ error: 'Failed to fetch historical data' });
+  }
+});
+
+// GET /api/market/metadata/:symbol - Get stock metadata
+router.get('/metadata/:symbol', async (req, res) => {
+  try {
+    const symbol = req.params.symbol.toUpperCase();
+    const metadata = await stockData.getStockMetadata(symbol);
+    res.json(metadata);
+  } catch (error) {
+    console.error('[Metadata Error]', error.message);
+    res.status(500).json({ error: 'Failed to fetch metadata' });
   }
 });
 
@@ -133,22 +115,18 @@ router.get('/indices', async (req, res) => {
     const names = { '^GSPC': 'S&P 500', '^DJI': 'Dow Jones', '^IXIC': 'NASDAQ', '^VIX': 'VIX' };
     const displaySymbols = { '^GSPC': 'SPY', '^DJI': 'DIA', '^IXIC': 'QQQ', '^VIX': 'VIX' };
 
-    const data = await Promise.all(
-      indices.map(async (symbol) => {
-        try {
-          const quote = await yahooFinance.quote(symbol);
-          return {
-            symbol: displaySymbols[symbol],
-            name: names[symbol],
-            price: quote.regularMarketPrice,
-            change: quote.regularMarketChange,
-            changePercent: quote.regularMarketChangePercent
-          };
-        } catch {
-          return { symbol: displaySymbols[symbol], name: names[symbol], price: 0, change: 0, changePercent: 0 };
-        }
-      })
-    );
+    const quotes = await stockData.getQuotes(indices);
+
+    const data = indices.map(symbol => {
+      const q = quotes[symbol];
+      return {
+        symbol: displaySymbols[symbol],
+        name: names[symbol],
+        price: q?.price || 0,
+        change: q?.changeAmount || 0,
+        changePercent: q?.changePercent || 0
+      };
+    });
 
     res.json(data);
   } catch (error) {
@@ -160,6 +138,7 @@ router.get('/indices', async (req, res) => {
 // GET /api/market/search?q=apple
 router.get('/search', async (req, res) => {
   try {
+    const yahooFinance = require('yahoo-finance2').default;
     const query = req.query.q;
     if (!query || query.length < 1) {
       return res.json([]);

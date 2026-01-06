@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>WealthPilot Pro - Add Holding</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4850e5",
+            "background-dark": "#111221",
+            "card-dark": "#1a1c2e",
+            "border-dark": "#2d2f45",
+            "text-secondary": "#9e9fb7",
+            "accent-green": "#0bda65",
+            "accent-red": "#ef4444",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111221; }
+    ::-webkit-scrollbar-thumb { background: #2d2f45; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4850e5; }
+  </style>
+</head>
+<body class="bg-background-dark text-white font-display overflow-hidden">
+  <div class="flex h-screen w-full">
+
+    <!-- Side Navigation -->
+    <aside class="hidden md:flex flex-col w-72 h-full border-r border-border-dark bg-[#111217] p-6 justify-between flex-shrink-0">
+      <div class="flex flex-col gap-8">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-2">
+          <div class="bg-primary/20 p-2 rounded-lg">
+            <span class="material-symbols-outlined text-primary text-3xl">token</span>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-white text-xl font-bold leading-tight">WealthPilot</h1>
+            <p class="text-text-secondary text-xs font-medium tracking-wider uppercase">Pro Edition</p>
+          </div>
+        </div>
+        <!-- Nav Links -->
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/dashboard">
+            <span class="material-symbols-outlined text-[24px]">dashboard</span>
+            <span class="text-sm font-semibold">Dashboard</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20" href="/holdings">
+            <span class="material-symbols-outlined text-[24px]">work</span>
+            <span class="text-sm font-semibold">Holdings</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/watchlist">
+            <span class="material-symbols-outlined text-[24px]">visibility</span>
+            <span class="text-sm font-semibold">Watchlist</span>
+          </a>
+        </nav>
+      </div>
+      <!-- Bottom Actions -->
+      <div class="flex flex-col gap-4">
+        <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/settings">
+          <span class="material-symbols-outlined text-[24px]">settings</span>
+          <span class="text-sm font-semibold">Settings</span>
+        </a>
+        <div class="h-px w-full bg-border-dark"></div>
+        <div class="flex items-center gap-3 px-2 py-2">
+          <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+            <%= (user?.firstName || user?.email || 'U').charAt(0).toUpperCase() %>
+          </div>
+          <div class="flex flex-col overflow-hidden">
+            <span class="text-white text-sm font-bold truncate"><%= user?.firstName || user?.email %></span>
+            <span class="text-text-secondary text-xs truncate">Premium Plan</span>
+          </div>
+          <a href="/logout" class="ml-auto text-text-secondary hover:text-white">
+            <span class="material-symbols-outlined">logout</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-6 py-5 md:px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
+        <div class="flex items-center gap-4">
+          <a href="/holdings" class="p-2 rounded-lg hover:bg-white/5 text-text-secondary hover:text-white transition-colors">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </a>
+          <div class="flex flex-col">
+            <h2 class="text-2xl font-bold text-white tracking-tight">Add Holding</h2>
+            <p class="text-text-secondary text-sm">Add a new investment to your portfolio</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto p-6 md:p-8">
+        <div class="max-w-xl mx-auto">
+
+          <% if (error) { %>
+            <div class="bg-accent-red/10 border border-accent-red/20 text-accent-red px-4 py-3 rounded-xl mb-6 flex items-center gap-3">
+              <span class="material-symbols-outlined">error</span>
+              <span><%= error %></span>
+            </div>
+          <% } %>
+
+          <form method="POST" action="/holdings/add" class="bg-card-dark border border-border-dark rounded-2xl p-8">
+            <div class="flex flex-col gap-6">
+
+              <!-- Portfolio Selection -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-white">Portfolio</label>
+                <select name="portfolioId" class="w-full bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
+                  <% if (portfolios.length === 0) { %>
+                    <option value="new">Create New Portfolio</option>
+                  <% } else { %>
+                    <% portfolios.forEach(p => { %>
+                      <option value="<%= p.id %>"><%= p.name %></option>
+                    <% }) %>
+                  <% } %>
+                </select>
+                <p class="text-text-secondary text-xs">Select which portfolio to add this holding to</p>
+              </div>
+
+              <!-- Symbol -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-white">Stock Symbol</label>
+                <div class="relative">
+                  <input type="text" name="symbol" id="symbolInput" placeholder="e.g., AAPL, GOOGL, MSFT" required
+                    class="w-full bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-white placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary uppercase"
+                  />
+                  <div id="symbolLoader" class="hidden absolute right-3 top-1/2 -translate-y-1/2">
+                    <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <div id="symbolCheck" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-accent-green">
+                    <span class="material-symbols-outlined">check_circle</span>
+                  </div>
+                  <div id="symbolError" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-accent-red">
+                    <span class="material-symbols-outlined">error</span>
+                  </div>
+                </div>
+                <p id="stockName" class="text-text-secondary text-xs">Enter the ticker symbol of the stock</p>
+              </div>
+
+              <!-- Shares -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-white">Number of Shares</label>
+                <input type="number" name="shares" placeholder="e.g., 10" step="0.0001" min="0.0001" required
+                  class="w-full bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-white placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+                <p class="text-text-secondary text-xs">How many shares do you own?</p>
+              </div>
+
+              <!-- Average Cost Basis -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-semibold text-white">Average Cost per Share ($)</label>
+                <div class="relative">
+                  <input type="number" name="avgCostBasis" id="avgCostInput" placeholder="Auto-filled with current price" step="0.01" min="0" required
+                    class="w-full bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-white placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  />
+                  <span id="priceLabel" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-xs text-accent-green font-medium">Live Price</span>
+                </div>
+                <p id="priceHelp" class="text-text-secondary text-xs">Auto-fills with current market price when you enter a symbol</p>
+              </div>
+
+              <!-- Submit -->
+              <div class="flex gap-4 pt-4">
+                <a href="/holdings" class="flex-1 py-3 px-4 border border-border-dark text-text-secondary hover:text-white hover:border-white/20 rounded-xl font-semibold text-center transition-colors">
+                  Cancel
+                </a>
+                <button type="submit" class="flex-1 py-3 px-4 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                  <span class="material-symbols-outlined text-[20px]">add</span>
+                  Add Holding
+                </button>
+              </div>
+
+            </div>
+          </form>
+
+          <!-- Help Text -->
+          <div class="mt-6 bg-primary/5 border border-primary/20 rounded-xl p-4">
+            <div class="flex gap-3">
+              <span class="material-symbols-outlined text-primary">info</span>
+              <div class="text-sm text-text-secondary">
+                <p class="font-semibold text-white mb-1">Need help?</p>
+                <p>Enter the stock ticker symbol (e.g., AAPL for Apple), the number of shares you own, and your average purchase price. We'll automatically fetch the current market price to calculate your returns.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+<script>
+  const symbolInput = document.getElementById('symbolInput');
+  const avgCostInput = document.getElementById('avgCostInput');
+  const symbolLoader = document.getElementById('symbolLoader');
+  const symbolCheck = document.getElementById('symbolCheck');
+  const symbolError = document.getElementById('symbolError');
+  const stockName = document.getElementById('stockName');
+  const priceLabel = document.getElementById('priceLabel');
+  const priceHelp = document.getElementById('priceHelp');
+
+  let debounceTimer;
+
+  function hideAllIcons() {
+    symbolLoader.classList.add('hidden');
+    symbolCheck.classList.add('hidden');
+    symbolError.classList.add('hidden');
+    priceLabel.classList.add('hidden');
+  }
+
+  async function fetchQuote(symbol) {
+    hideAllIcons();
+    symbolLoader.classList.remove('hidden');
+    stockName.textContent = 'Fetching stock data...';
+    stockName.className = 'text-text-secondary text-xs';
+
+    try {
+      const response = await fetch(`/api/market/quote/${symbol}`);
+      const data = await response.json();
+
+      hideAllIcons();
+
+      if (data.error || !data.price) {
+        symbolError.classList.remove('hidden');
+        stockName.textContent = 'Symbol not found. Please check and try again.';
+        stockName.className = 'text-accent-red text-xs';
+        return;
+      }
+
+      // Success - fill in the price
+      symbolCheck.classList.remove('hidden');
+      priceLabel.classList.remove('hidden');
+
+      avgCostInput.value = data.price.toFixed(2);
+      stockName.innerHTML = `<span class="text-white font-medium">${data.name}</span> - Current price: <span class="text-accent-green font-bold">$${data.price.toFixed(2)}</span>`;
+      stockName.className = 'text-text-secondary text-xs';
+      priceHelp.innerHTML = `Live price from market. <span class="text-text-secondary">Change: <span class="${data.changePercent >= 0 ? 'text-accent-green' : 'text-accent-red'}">${data.changePercent >= 0 ? '+' : ''}${data.changePercent?.toFixed(2) || 0}%</span></span>`;
+
+    } catch (error) {
+      hideAllIcons();
+      symbolError.classList.remove('hidden');
+      stockName.textContent = 'Error fetching data. Please try again.';
+      stockName.className = 'text-accent-red text-xs';
+    }
+  }
+
+  symbolInput.addEventListener('input', function(e) {
+    const symbol = e.target.value.trim().toUpperCase();
+    e.target.value = symbol;
+
+    clearTimeout(debounceTimer);
+
+    if (symbol.length < 1) {
+      hideAllIcons();
+      stockName.textContent = 'Enter the ticker symbol of the stock';
+      stockName.className = 'text-text-secondary text-xs';
+      priceHelp.textContent = 'Auto-fills with current market price when you enter a symbol';
+      avgCostInput.value = '';
+      return;
+    }
+
+    // Debounce - wait 500ms after user stops typing
+    debounceTimer = setTimeout(() => {
+      if (symbol.length >= 1 && symbol.length <= 5) {
+        fetchQuote(symbol);
+      }
+    }, 500);
+  });
+
+  // Also fetch on blur if there's a symbol
+  symbolInput.addEventListener('blur', function(e) {
+    const symbol = e.target.value.trim().toUpperCase();
+    if (symbol.length >= 1 && symbol.length <= 5 && !avgCostInput.value) {
+      fetchQuote(symbol);
+    }
+  });
+</script>
+</body>
+</html>

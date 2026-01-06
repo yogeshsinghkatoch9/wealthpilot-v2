@@ -10,7 +10,8 @@ const prisma = new PrismaClient();
 // Validation rules
 const registerValidation = [
   body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
+  body('password').isLength({ min: 8 }),
+  body('fullName').optional().trim(),
   body('firstName').optional().trim(),
   body('lastName').optional().trim()
 ];
@@ -28,7 +29,17 @@ router.post('/register', registerValidation, async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { email, password, firstName, lastName } = req.body;
+    const { email, password, fullName, firstName: providedFirst, lastName: providedLast } = req.body;
+
+    // Handle fullName field - split into firstName and lastName
+    let firstName = providedFirst;
+    let lastName = providedLast;
+
+    if (fullName && !firstName && !lastName) {
+      const nameParts = fullName.trim().split(/\s+/);
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
 
     // Check if user exists
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -137,6 +148,33 @@ router.post('/login', loginValidation, async (req, res) => {
 // GET /api/auth/me
 router.get('/me', authenticate, async (req, res) => {
   res.json({ user: req.user });
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', [body('email').isEmail().normalizeEmail()], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    const { email } = req.body;
+
+    // Check if user exists (but always return success for security)
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (user) {
+      // TODO: Generate reset token and send email
+      // For now, just log it
+      console.log(`[Password Reset] Request for: ${email}`);
+    }
+
+    // Always return success to prevent email enumeration
+    res.json({ success: true, message: 'If an account exists, a reset link will be sent.' });
+  } catch (error) {
+    console.error('[Forgot Password Error]', error);
+    res.status(500).json({ error: 'Request failed' });
+  }
 });
 
 module.exports = router;

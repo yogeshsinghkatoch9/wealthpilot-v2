@@ -1,156 +1,603 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - WealthPilot Pro</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400" rel="stylesheet">
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>WealthPilot Pro - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4850e5",
+            "background-dark": "#111221",
+            "card-dark": "#1a1c2e",
+            "border-dark": "#2d2f45",
+            "text-secondary": "#9e9fb7",
+            "accent-green": "#0bda65",
+            "accent-red": "#ef4444",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
   <style>
-    body { font-family: 'Inter', sans-serif; background: #0f0f0f; }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; vertical-align: middle; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111221; }
+    ::-webkit-scrollbar-thumb { background: #2d2f45; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4850e5; }
+    .glass-panel {
+      background: rgba(26, 28, 46, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
   </style>
 </head>
-<body class="min-h-screen text-white">
+<body class="bg-background-dark text-white font-display overflow-hidden">
+  <div class="flex h-screen w-full">
 
-  <!-- Navigation -->
-  <nav class="bg-gray-900/80 backdrop-blur-lg border-b border-gray-800 sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16">
-        <div class="flex items-center space-x-8">
-          <a href="/dashboard" class="text-xl font-bold text-white">WealthPilot</a>
-          <div class="hidden md:flex space-x-4">
-            <a href="/dashboard" class="text-white px-3 py-2 rounded-lg bg-gray-800">Dashboard</a>
-            <a href="/watchlist" class="text-gray-400 hover:text-white px-3 py-2">Watchlist</a>
+    <!-- Side Navigation -->
+    <aside class="hidden md:flex flex-col w-72 h-full border-r border-border-dark bg-[#111217] p-6 justify-between flex-shrink-0">
+      <div class="flex flex-col gap-8">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-2">
+          <div class="bg-primary/20 p-2 rounded-lg">
+            <span class="material-symbols-outlined text-primary text-3xl">token</span>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-white text-xl font-bold leading-tight">WealthPilot</h1>
+            <p class="text-text-secondary text-xs font-medium tracking-wider uppercase">Pro Edition</p>
           </div>
         </div>
-        <div class="flex items-center space-x-4">
-          <!-- Market Indices -->
-          <div class="hidden lg:flex items-center space-x-4 text-sm">
-            <% if (indices && indices.length > 0) { %>
-              <% indices.forEach(idx => { %>
-                <div class="flex items-center space-x-2">
-                  <span class="text-gray-400"><%= idx.symbol %></span>
-                  <span class="<%= idx.changePercent >= 0 ? 'text-green-400' : 'text-red-400' %>">
-                    <%= idx.changePercent >= 0 ? '+' : '' %><%= (idx.changePercent || 0).toFixed(2) %>%
-                  </span>
-                </div>
-              <% }) %>
-            <% } %>
+        <!-- Nav Links -->
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20" href="/dashboard">
+            <span class="material-symbols-outlined text-[24px]">dashboard</span>
+            <span class="text-sm font-semibold">Dashboard</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/holdings">
+            <span class="material-symbols-outlined text-[24px]">work</span>
+            <span class="text-sm font-semibold">Holdings</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/analysis">
+            <span class="material-symbols-outlined text-[24px]">monitoring</span>
+            <span class="text-sm font-semibold">Analysis</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/watchlist">
+            <span class="material-symbols-outlined text-[24px]">visibility</span>
+            <span class="text-sm font-semibold">Watchlist</span>
+          </a>
+        </nav>
+      </div>
+      <!-- Bottom Actions -->
+      <div class="flex flex-col gap-4">
+        <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/settings">
+          <span class="material-symbols-outlined text-[24px]">settings</span>
+          <span class="text-sm font-semibold">Settings</span>
+        </a>
+        <div class="h-px w-full bg-border-dark"></div>
+        <div class="flex items-center gap-3 px-2 py-2">
+          <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+            <%= (user?.firstName || user?.email || 'U').charAt(0).toUpperCase() %>
           </div>
-          <a href="/logout" class="text-gray-400 hover:text-white">
+          <div class="flex flex-col overflow-hidden">
+            <span class="text-white text-sm font-bold truncate"><%= user?.firstName || user?.email %></span>
+            <span class="text-text-secondary text-xs truncate">Premium Plan</span>
+          </div>
+          <a href="/logout" class="ml-auto text-text-secondary hover:text-white">
             <span class="material-symbols-outlined">logout</span>
           </a>
         </div>
       </div>
-    </div>
-  </nav>
+    </aside>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Welcome Section -->
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold">Welcome back!</h1>
-      <p class="text-gray-400 mt-1">Here's an overview of your portfolios</p>
-    </div>
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-6 py-5 md:px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
+        <div class="flex flex-col">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Overview</h2>
+          <p class="text-text-secondary text-sm">Welcome back, here's what's happening today.</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="relative hidden md:block">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[20px]">search</span>
+            <input class="bg-card-dark border border-border-dark text-white text-sm rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-64 placeholder-text-secondary/50" placeholder="Search assets..." type="text" id="searchInput"/>
+          </div>
+          <button class="relative p-2.5 rounded-xl bg-card-dark border border-border-dark text-text-secondary hover:text-white hover:border-primary/50 transition-colors">
+            <span class="material-symbols-outlined text-[24px]">notifications</span>
+          </button>
+          <button class="md:hidden p-2.5 rounded-xl bg-primary text-white">
+            <span class="material-symbols-outlined text-[24px]">menu</span>
+          </button>
+        </div>
+      </header>
 
-    <!-- Portfolios Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <% if (portfolios && portfolios.length > 0) { %>
-        <% portfolios.forEach(portfolio => { %>
-          <a href="/portfolio/<%= portfolio.id %>" class="block">
-            <div class="bg-gray-800/50 rounded-xl p-6 border border-gray-700 hover:border-indigo-500 transition-colors">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold"><%= portfolio.name %></h3>
-                <% if (portfolio.isDefault) { %>
-                  <span class="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded">Default</span>
-                <% } %>
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto p-6 md:p-8">
+        <div class="max-w-7xl mx-auto flex flex-col gap-8">
+
+          <% if (analytics.holdingsCount === 0) { %>
+            <!-- Empty State -->
+            <div class="flex flex-col items-center justify-center py-20">
+              <div class="bg-card-dark border border-border-dark rounded-2xl p-12 text-center max-w-md">
+                <div class="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span class="material-symbols-outlined text-primary text-4xl">account_balance_wallet</span>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-3">No Holdings Yet</h3>
+                <p class="text-text-secondary mb-8">Start building your portfolio by adding your first investment holding.</p>
+                <a href="/holdings/add" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20">
+                  <span class="material-symbols-outlined">add</span>
+                  Add Your First Holding
+                </a>
+              </div>
+            </div>
+          <% } else { %>
+            <!-- Stats Grid -->
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Total Net Worth -->
+              <div class="glass-panel rounded-2xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span class="material-symbols-outlined text-6xl text-primary">account_balance</span>
+                </div>
+                <div class="flex flex-col gap-1 relative z-10">
+                  <p class="text-text-secondary font-medium">Total Net Worth</p>
+                  <div class="flex items-baseline gap-2">
+                    <h3 class="text-3xl font-bold text-white tracking-tight">$<%= analytics.totalValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></h3>
+                  </div>
+                  <div class="flex items-center gap-2 mt-2">
+                    <span class="<%= analytics.totalReturnPercent >= 0 ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red' %> px-2 py-0.5 rounded text-sm font-semibold flex items-center gap-1">
+                      <span class="material-symbols-outlined text-[16px]"><%= analytics.totalReturnPercent >= 0 ? 'trending_up' : 'trending_down' %></span>
+                      <%= analytics.totalReturnPercent >= 0 ? '+' : '' %><%= analytics.totalReturnPercent.toFixed(2) %>%
+                    </span>
+                    <span class="text-text-secondary text-sm">total return</span>
+                  </div>
+                </div>
+                <!-- Subtle chart bg -->
+                <div class="absolute bottom-0 left-0 right-0 h-16 opacity-30">
+                  <svg class="w-full h-full text-primary fill-current" viewBox="0 0 300 60">
+                    <path d="M0,40 Q30,35 60,45 T120,30 T180,40 T240,20 T300,35 V60 H0 Z"></path>
+                  </svg>
+                </div>
               </div>
 
-              <div class="space-y-3">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Holdings</span>
-                  <span><%= portfolio.holdingsCount || 0 %></span>
+              <!-- Day's Gain -->
+              <div class="bg-card-dark border border-border-dark rounded-2xl p-6 flex flex-col gap-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-text-secondary font-medium">Day's Gain</p>
+                    <h3 class="text-3xl font-bold text-white tracking-tight mt-1">
+                      <%= analytics.dayGain >= 0 ? '+' : '' %>$<%= Math.abs(analytics.dayGain).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                    </h3>
+                  </div>
+                  <div class="p-2 <%= analytics.dayGain >= 0 ? 'bg-accent-green/10' : 'bg-accent-red/10' %> rounded-lg">
+                    <span class="material-symbols-outlined <%= analytics.dayGain >= 0 ? 'text-accent-green' : 'text-accent-red' %>">
+                      <%= analytics.dayGain >= 0 ? 'arrow_outward' : 'arrow_downward' %>
+                    </span>
+                  </div>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Transactions</span>
-                  <span><%= portfolio.transactionsCount || 0 %></span>
+                <div class="w-full bg-white/5 rounded-full h-1.5 mt-2">
+                  <div class="<%= analytics.dayGain >= 0 ? 'bg-accent-green' : 'bg-accent-red' %> h-1.5 rounded-full" style="width: <%= Math.min(Math.abs(analytics.dayGainPercent) * 10, 100) %>%"></div>
                 </div>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Cash Balance</span>
-                  <span>$<%= (portfolio.cashBalance || 0).toLocaleString() %></span>
+              </div>
+
+              <!-- Total Return -->
+              <div class="bg-card-dark border border-border-dark rounded-2xl p-6 flex flex-col gap-4">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-text-secondary font-medium">Total Return</p>
+                    <h3 class="text-3xl font-bold text-white tracking-tight mt-1">
+                      <%= analytics.totalReturnPercent >= 0 ? '+' : '' %><%= analytics.totalReturnPercent.toFixed(2) %>%
+                    </h3>
+                  </div>
+                  <div class="p-2 bg-primary/10 rounded-lg">
+                    <span class="material-symbols-outlined text-primary">pie_chart</span>
+                  </div>
+                </div>
+                <div class="flex gap-2 mt-2">
+                  <span class="text-sm text-text-secondary">$<%= analytics.totalReturn.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                  <span class="text-sm <%= analytics.totalReturnPercent >= 0 ? 'text-accent-green' : 'text-accent-red' %> font-bold ml-auto">
+                    <%= analytics.totalReturnPercent >= 0 ? 'Profit' : 'Loss' %>
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Main Grid Layout -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <!-- Left Column (Chart & Holdings) -->
+              <div class="xl:col-span-2 flex flex-col gap-6">
+                <!-- Chart Section -->
+                <div class="bg-card-dark border border-border-dark rounded-2xl p-6 flex flex-col gap-6">
+                  <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <h3 class="text-xl font-bold text-white">Portfolio Performance</h3>
+                      <p class="text-text-secondary text-sm">Historical value over time</p>
+                    </div>
+                    <div class="flex bg-background-dark p-1 rounded-lg border border-border-dark">
+                      <button onclick="updateChart('1D')" class="chart-btn px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary hover:text-white transition-colors" data-period="1D">1D</button>
+                      <button onclick="updateChart('1W')" class="chart-btn px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary hover:text-white transition-colors" data-period="1W">1W</button>
+                      <button onclick="updateChart('1M')" class="chart-btn px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-white shadow-lg shadow-primary/25 active" data-period="1M">1M</button>
+                      <button onclick="updateChart('YTD')" class="chart-btn px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary hover:text-white transition-colors" data-period="YTD">YTD</button>
+                      <button onclick="updateChart('ALL')" class="chart-btn px-3 py-1.5 rounded-md text-sm font-medium text-text-secondary hover:text-white transition-colors" data-period="ALL">ALL</button>
+                    </div>
+                  </div>
+                  <div class="h-[300px] w-full relative">
+                    <canvas id="portfolioChart"></canvas>
+                  </div>
+                </div>
+
+                <!-- Top Holdings Table -->
+                <div class="bg-card-dark border border-border-dark rounded-2xl flex flex-col overflow-hidden">
+                  <div class="p-6 border-b border-border-dark flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-white">Top Holdings</h3>
+                    <a href="/holdings" class="text-primary text-sm font-semibold hover:text-primary/80">View All</a>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                      <thead class="bg-background-dark/50 text-xs uppercase text-text-secondary font-semibold">
+                        <tr>
+                          <th class="px-6 py-4">Asset</th>
+                          <th class="px-6 py-4 text-right">Price</th>
+                          <th class="px-6 py-4 text-right">Value</th>
+                          <th class="px-6 py-4 text-right">Day Change</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-border-dark text-sm">
+                        <% analytics.topHoldings.forEach(holding => { %>
+                          <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4">
+                              <div class="flex items-center gap-3">
+                                <div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-sm">
+                                  <%= holding.symbol.charAt(0) %>
+                                </div>
+                                <div>
+                                  <p class="font-bold text-white"><%= holding.name %></p>
+                                  <p class="text-text-secondary text-xs"><%= holding.symbol %></p>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="px-6 py-4 text-right text-white font-medium">$<%= holding.currentPrice.toFixed(2) %></td>
+                            <td class="px-6 py-4 text-right">
+                              <p class="text-white font-medium">$<%= holding.currentValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></p>
+                              <p class="text-text-secondary text-xs"><%= holding.shares.toFixed(2) %> shares</p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                              <span class="<%= holding.dayGainPercent >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10' %> px-2 py-1 rounded text-xs font-bold">
+                                <%= holding.dayGainPercent >= 0 ? '+' : '' %><%= holding.dayGainPercent.toFixed(2) %>%
+                              </span>
+                            </td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column (Activity Stream) -->
+              <div class="xl:col-span-1 flex flex-col gap-6">
+                <!-- Activity Stream -->
+                <div class="bg-card-dark border border-border-dark rounded-2xl flex flex-col flex-1 h-full min-h-[400px]">
+                  <div class="p-6 border-b border-border-dark flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                      <h3 class="text-lg font-bold text-white">Activity Stream</h3>
+                      <span class="flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-green"></span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="p-6 flex flex-col gap-6 overflow-y-auto">
+                    <% if (transactions && transactions.length > 0) { %>
+                      <% transactions.forEach((tx, index) => { %>
+                        <div class="flex gap-4 relative">
+                          <% if (index < transactions.length - 1) { %>
+                            <div class="absolute top-8 left-[19px] bottom-[-24px] w-px bg-border-dark"></div>
+                          <% } %>
+                          <div class="h-10 w-10 rounded-full bg-[#1e2330] border border-border-dark flex items-center justify-center shrink-0 z-10">
+                            <% if (tx.type === 'buy') { %>
+                              <span class="material-symbols-outlined text-accent-green text-[20px]">shopping_cart</span>
+                            <% } else if (tx.type === 'sell') { %>
+                              <span class="material-symbols-outlined text-accent-red text-[20px]">sell</span>
+                            <% } else if (tx.type === 'dividend') { %>
+                              <span class="material-symbols-outlined text-primary text-[20px]">payments</span>
+                            <% } else { %>
+                              <span class="material-symbols-outlined text-text-secondary text-[20px]">swap_horiz</span>
+                            <% } %>
+                          </div>
+                          <div class="flex flex-col gap-1 pb-2">
+                            <p class="text-white text-sm font-medium">
+                              <% if (tx.type === 'buy') { %>
+                                Bought <span class="font-bold"><%= tx.shares %> <%= tx.symbol %></span>
+                              <% } else if (tx.type === 'sell') { %>
+                                Sold <span class="font-bold"><%= tx.shares %> <%= tx.symbol %></span>
+                              <% } else if (tx.type === 'dividend') { %>
+                                Dividend from <span class="font-bold"><%= tx.symbol %></span>
+                              <% } else { %>
+                                Transaction <span class="font-bold"><%= tx.symbol %></span>
+                              <% } %>
+                            </p>
+                            <p class="text-text-secondary text-xs"><%= new Date(tx.executedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }) %></p>
+                            <% if (tx.type === 'buy') { %>
+                              <span class="text-white text-xs font-bold bg-[#1e2330] px-2 py-1 rounded w-fit border border-border-dark mt-1">-$<%= tx.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                            <% } else if (tx.type === 'sell' || tx.type === 'dividend') { %>
+                              <span class="text-accent-green text-xs font-bold bg-accent-green/10 px-2 py-1 rounded w-fit mt-1">+$<%= tx.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                            <% } %>
+                          </div>
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <div class="text-center text-text-secondary py-8">
+                        <span class="material-symbols-outlined text-4xl mb-2">history</span>
+                        <p class="text-sm">No recent activity</p>
+                        <p class="text-xs mt-1">Add holdings to see transactions here</p>
+                      </div>
+                    <% } %>
+                  </div>
+                  <div class="p-4 border-t border-border-dark mt-auto">
+                    <a href="/holdings" class="block w-full py-2 text-sm text-primary font-medium hover:bg-primary/10 rounded-lg transition-colors text-center">
+                      View All Activity
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Allocation Chart -->
+                <div class="bg-card-dark border border-border-dark rounded-2xl p-6">
+                  <h3 class="text-lg font-bold text-white mb-4">Portfolio Allocation</h3>
+                  <div class="h-[200px] relative">
+                    <canvas id="allocationChart"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
-          </a>
-        <% }) %>
-      <% } else { %>
-        <div class="col-span-full text-center py-12">
-          <span class="material-symbols-outlined text-5xl text-gray-600 mb-4">folder_open</span>
-          <p class="text-gray-400">No portfolios yet</p>
-        </div>
-      <% } %>
+          <% } %>
 
-      <!-- Create New Portfolio Card -->
-      <div class="bg-gray-800/30 rounded-xl p-6 border border-dashed border-gray-700 hover:border-gray-500 transition-colors cursor-pointer flex items-center justify-center min-h-[200px]"
-           onclick="document.getElementById('createPortfolioModal').classList.remove('hidden')">
-        <div class="text-center">
-          <span class="material-symbols-outlined text-4xl text-gray-500 mb-2">add_circle</span>
-          <p class="text-gray-400">Create New Portfolio</p>
         </div>
       </div>
-    </div>
-  </main>
-
-  <!-- Create Portfolio Modal -->
-  <div id="createPortfolioModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-gray-800 rounded-xl p-6 w-full max-w-md border border-gray-700">
-      <h3 class="text-xl font-semibold mb-4">Create Portfolio</h3>
-      <form id="createPortfolioForm" class="space-y-4">
-        <div>
-          <label class="block text-sm text-gray-400 mb-1">Name</label>
-          <input type="text" name="name" required
-                 class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div>
-          <label class="block text-sm text-gray-400 mb-1">Description</label>
-          <input type="text" name="description"
-                 class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div class="flex space-x-3 pt-4">
-          <button type="button" onclick="document.getElementById('createPortfolioModal').classList.add('hidden')"
-                  class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg">Cancel</button>
-          <button type="submit" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg">Create</button>
-        </div>
-      </form>
-    </div>
+    </main>
   </div>
 
   <script>
-    document.getElementById('createPortfolioForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData);
+    // Portfolio data from server
+    const holdings = <%- JSON.stringify(analytics.topHoldings || []) %>;
+    const totalValue = <%= analytics.totalValue || 0 %>;
+    const performanceData = <%- JSON.stringify(performance || []) %>;
 
-      try {
-        const res = await fetch('/api/portfolios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+    // Debug: log performance data
+    console.log('Performance data received:', performanceData.length, 'points');
+    if (performanceData.length > 0) {
+      console.log('First:', performanceData[0]);
+      console.log('Last:', performanceData[performanceData.length - 1]);
+    }
 
-        if (res.ok) {
-          window.location.reload();
-        } else {
-          const err = await res.json();
-          alert(err.error || 'Failed to create portfolio');
+    // Portfolio Performance Chart
+    const ctx = document.getElementById('portfolioChart');
+    if (ctx && holdings.length > 0) {
+      const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 300);
+      gradient.addColorStop(0, 'rgba(72, 80, 229, 0.3)');
+      gradient.addColorStop(1, 'rgba(72, 80, 229, 0)');
+
+      // Process real performance data for chart
+      const processData = (days) => {
+        const data = [];
+        const labels = [];
+        const dates = [];
+        const now = new Date();
+        const cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() - days);
+
+        // Filter data by period
+        let filtered = performanceData.filter(p => new Date(p.date) >= cutoff);
+
+        // If no real data, use current value as single point
+        if (filtered.length === 0 && totalValue > 0) {
+          filtered = [{ date: new Date().toISOString(), value: totalValue }];
         }
-      } catch (err) {
-        alert('Failed to create portfolio');
+
+        // Determine step size based on period
+        let step = 1;
+        if (days > 100) step = 7;
+        else if (days > 30) step = 3;
+        else if (days > 7) step = 2;
+
+        // Sample data at intervals
+        for (let i = 0; i < filtered.length; i += step) {
+          const point = filtered[i];
+          const date = new Date(point.date);
+          dates.push(date);
+
+          // Format label based on period
+          let label;
+          if (days <= 7) {
+            label = date.toLocaleDateString('en-US', { weekday: 'short' });
+          } else if (days <= 30) {
+            label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          } else {
+            label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+
+          labels.push(label);
+          data.push(point.value);
+        }
+
+        // Ensure we include the last point
+        if (filtered.length > 0 && (filtered.length - 1) % step !== 0) {
+          const last = filtered[filtered.length - 1];
+          const date = new Date(last.date);
+          dates.push(date);
+          labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+          data.push(last.value);
+        }
+
+        console.log('Processed chart data:', { labels: labels.length, data: data.length, filtered: filtered.length });
+        return { labels, data, dates };
+      };
+
+      let chartData = processData(30);
+      console.log('Chart data for 1M:', chartData);
+
+      const portfolioChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: 'Portfolio Value',
+            data: chartData.data,
+            borderColor: '#4850e5',
+            backgroundColor: gradient,
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: '#4850e5',
+            pointHoverBorderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#111221',
+              titleColor: '#9e9fb7',
+              bodyColor: '#fff',
+              bodyFont: { size: 16, weight: 'bold' },
+              padding: 16,
+              borderColor: '#2d2f45',
+              borderWidth: 1,
+              displayColors: false,
+              callbacks: {
+                title: (ctx) => {
+                  const idx = ctx[0].dataIndex;
+                  // Use real date from chartData.dates if available
+                  const date = chartData.dates && chartData.dates[idx] ? new Date(chartData.dates[idx]) : new Date();
+                  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                },
+                label: (ctx) => '$' + ctx.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+                afterLabel: (ctx) => {
+                  const data = ctx.dataset.data;
+                  const idx = ctx.dataIndex;
+                  const currentVal = data[idx];
+                  const prevVal = idx > 0 ? data[idx - 1] : data[0];
+                  const change = ((currentVal - prevVal) / prevVal) * 100;
+                  const sign = change >= 0 ? '+' : '';
+                  return sign + change.toFixed(1) + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: {
+                color: '#9e9fb7',
+                font: { size: 11, weight: '600' },
+                maxTicksLimit: 8,
+                maxRotation: 0,
+                minRotation: 0
+              }
+            },
+            y: {
+              grid: { color: '#2d2f45', drawBorder: false },
+              ticks: {
+                color: '#9e9fb7',
+                font: { size: 11 },
+                maxTicksLimit: 5,
+                callback: (value) => '$' + (value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value.toFixed(0))
+              }
+            }
+          }
+        }
+      });
+
+      // Update chart period
+      window.updateChart = function(period) {
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+          btn.classList.remove('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/25', 'active');
+          btn.classList.add('text-text-secondary');
+        });
+        document.querySelector(`.chart-btn[data-period="${period}"]`).classList.add('bg-primary', 'text-white', 'shadow-lg', 'shadow-primary/25', 'active');
+        document.querySelector(`.chart-btn[data-period="${period}"]`).classList.remove('text-text-secondary');
+
+        const days = { '1D': 1, '1W': 7, '1M': 30, 'YTD': 180, 'ALL': 365 }[period];
+        chartData = processData(days);
+        portfolioChart.data.labels = chartData.labels;
+        portfolioChart.data.datasets[0].data = chartData.data;
+        portfolioChart.update();
+      };
+    }
+
+    // Allocation Pie Chart
+    const allocCtx = document.getElementById('allocationChart');
+    if (allocCtx && holdings.length > 0) {
+      const colors = ['#4850e5', '#0bda65', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+
+      new Chart(allocCtx, {
+        type: 'doughnut',
+        data: {
+          labels: holdings.map(h => h.symbol),
+          datasets: [{
+            data: holdings.map(h => h.currentValue),
+            backgroundColor: colors.slice(0, holdings.length),
+            borderColor: '#1a1c2e',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '65%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#9e9fb7',
+                padding: 15,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              backgroundColor: '#111221',
+              titleColor: '#9e9fb7',
+              bodyColor: '#fff',
+              borderColor: '#2d2f45',
+              borderWidth: 1,
+              callbacks: {
+                label: (ctx) => {
+                  const pct = ((ctx.parsed / totalValue) * 100).toFixed(1);
+                  return `${ctx.label}: $${ctx.parsed.toLocaleString()} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Search functionality
+    document.getElementById('searchInput')?.addEventListener('input', function(e) {
+      const query = e.target.value.toLowerCase();
+      if (query.length >= 2) {
+        window.location.href = `/holdings?search=${encodeURIComponent(query)}`;
       }
     });
   </script>
-
 </body>
 </html>

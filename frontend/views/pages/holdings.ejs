@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>WealthPilot Pro - Holdings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4850e5",
+            "background-dark": "#111221",
+            "card-dark": "#1a1c2e",
+            "border-dark": "#2d2f45",
+            "text-secondary": "#9e9fb7",
+            "accent-green": "#0bda65",
+            "accent-red": "#ef4444",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #111221; }
+    ::-webkit-scrollbar-thumb { background: #2d2f45; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4850e5; }
+  </style>
+</head>
+<body class="bg-background-dark text-white font-display overflow-hidden">
+  <div class="flex h-screen w-full">
+
+    <!-- Side Navigation -->
+    <aside class="hidden md:flex flex-col w-72 h-full border-r border-border-dark bg-[#111217] p-6 justify-between flex-shrink-0">
+      <div class="flex flex-col gap-8">
+        <!-- Logo -->
+        <div class="flex items-center gap-3 px-2">
+          <div class="bg-primary/20 p-2 rounded-lg">
+            <span class="material-symbols-outlined text-primary text-3xl">token</span>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-white text-xl font-bold leading-tight">WealthPilot</h1>
+            <p class="text-text-secondary text-xs font-medium tracking-wider uppercase">Pro Edition</p>
+          </div>
+        </div>
+        <!-- Nav Links -->
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/dashboard">
+            <span class="material-symbols-outlined text-[24px]">dashboard</span>
+            <span class="text-sm font-semibold">Dashboard</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20" href="/holdings">
+            <span class="material-symbols-outlined text-[24px]">work</span>
+            <span class="text-sm font-semibold">Holdings</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/watchlist">
+            <span class="material-symbols-outlined text-[24px]">visibility</span>
+            <span class="text-sm font-semibold">Watchlist</span>
+          </a>
+        </nav>
+      </div>
+      <!-- Bottom Actions -->
+      <div class="flex flex-col gap-4">
+        <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/settings">
+          <span class="material-symbols-outlined text-[24px]">settings</span>
+          <span class="text-sm font-semibold">Settings</span>
+        </a>
+        <div class="h-px w-full bg-border-dark"></div>
+        <div class="flex items-center gap-3 px-2 py-2">
+          <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+            <%= (user?.firstName || user?.email || 'U').charAt(0).toUpperCase() %>
+          </div>
+          <div class="flex flex-col overflow-hidden">
+            <span class="text-white text-sm font-bold truncate"><%= user?.firstName || user?.email %></span>
+            <span class="text-text-secondary text-xs truncate">Premium Plan</span>
+          </div>
+          <a href="/logout" class="ml-auto text-text-secondary hover:text-white">
+            <span class="material-symbols-outlined">logout</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+      <!-- Header -->
+      <header class="flex items-center justify-between px-6 py-5 md:px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
+        <div class="flex flex-col">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Holdings</h2>
+          <p class="text-text-secondary text-sm">Manage your investment portfolio</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="/holdings/add" class="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-colors">
+            <span class="material-symbols-outlined text-[20px]">add</span>
+            <span class="hidden sm:inline">Add Holding</span>
+          </a>
+          <button class="md:hidden p-2.5 rounded-xl bg-card-dark border border-border-dark text-white">
+            <span class="material-symbols-outlined text-[24px]">menu</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto p-6 md:p-8">
+        <div class="max-w-7xl mx-auto flex flex-col gap-6">
+
+          <% if (analytics.holdingsCount === 0) { %>
+            <!-- Empty State -->
+            <div class="flex flex-col items-center justify-center py-20">
+              <div class="bg-card-dark border border-border-dark rounded-2xl p-12 text-center max-w-md">
+                <div class="bg-primary/10 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span class="material-symbols-outlined text-primary text-4xl">work</span>
+                </div>
+                <h3 class="text-2xl font-bold text-white mb-3">No Holdings Yet</h3>
+                <p class="text-text-secondary mb-8">Start building your portfolio by adding your first investment holding.</p>
+                <a href="/holdings/add" class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-primary/20">
+                  <span class="material-symbols-outlined">add</span>
+                  Add Your First Holding
+                </a>
+              </div>
+            </div>
+          <% } else { %>
+            <!-- Holdings Table -->
+            <div class="bg-card-dark border border-border-dark rounded-2xl overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-background-dark/50 text-xs uppercase text-text-secondary font-semibold">
+                    <tr>
+                      <th class="px-6 py-4">Asset</th>
+                      <th class="px-6 py-4 text-right">Shares</th>
+                      <th class="px-6 py-4 text-right">Avg Cost</th>
+                      <th class="px-6 py-4 text-right">Current Price</th>
+                      <th class="px-6 py-4 text-right">Market Value</th>
+                      <th class="px-6 py-4 text-right">Total Return</th>
+                      <th class="px-6 py-4 text-right">Day Change</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border-dark text-sm">
+                    <% analytics.topHoldings.forEach(holding => { %>
+                      <tr class="hover:bg-white/5 transition-colors">
+                        <td class="px-6 py-4">
+                          <div class="flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                              <%= holding.symbol.charAt(0) %>
+                            </div>
+                            <div>
+                              <p class="font-bold text-white"><%= holding.name %></p>
+                              <p class="text-text-secondary text-xs"><%= holding.symbol %></p>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 text-right text-white font-medium"><%= holding.shares.toFixed(4) %></td>
+                        <td class="px-6 py-4 text-right text-text-secondary">$<%= (holding.costBasis / holding.shares).toFixed(2) %></td>
+                        <td class="px-6 py-4 text-right text-white font-medium">$<%= holding.currentPrice.toFixed(2) %></td>
+                        <td class="px-6 py-4 text-right text-white font-medium">$<%= holding.currentValue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></td>
+                        <td class="px-6 py-4 text-right">
+                          <div class="flex flex-col items-end">
+                            <span class="<%= holding.totalGainPercent >= 0 ? 'text-accent-green' : 'text-accent-red' %> font-bold">
+                              <%= holding.totalGainPercent >= 0 ? '+' : '' %><%= holding.totalGainPercent.toFixed(2) %>%
+                            </span>
+                            <span class="text-text-secondary text-xs">
+                              <%= holding.totalGain >= 0 ? '+' : '' %>$<%= holding.totalGain.toFixed(2) %>
+                            </span>
+                          </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                          <span class="<%= holding.dayGainPercent >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-accent-red bg-accent-red/10' %> px-2 py-1 rounded text-xs font-bold">
+                            <%= holding.dayGainPercent >= 0 ? '+' : '' %><%= holding.dayGainPercent.toFixed(2) %>%
+                          </span>
+                        </td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% } %>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

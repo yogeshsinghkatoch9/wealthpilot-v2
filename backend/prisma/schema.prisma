@@ -24,6 +24,12 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  // Onboarding & Preferences
+  onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
+  investmentGoal      String?  @map("investment_goal")    // growth, balanced, income
+  riskTolerance       String?  @map("risk_tolerance")     // conservative, moderate, aggressive
+  primaryCurrency     String   @default("USD") @map("primary_currency")
+
   // Relations
   sessions      Session[]
   portfolios    Portfolio[]
@@ -207,4 +213,67 @@ model StockQuote {
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@map("stock_quotes")
+}
+
+// ============================================
+// HISTORICAL STOCK DATA (5 YEAR)
+// ============================================
+
+model StockHistory {
+  id        String   @id @default(uuid())
+  symbol    String
+  date      DateTime
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  adjClose  Float    @map("adj_close")
+  volume    BigInt
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([symbol, date])
+  @@index([symbol])
+  @@index([date])
+  @@index([symbol, date(sort: Desc)])
+  @@map("stock_history")
+}
+
+model StockMetadata {
+  symbol          String   @id
+  name            String?
+  exchange        String?
+  sector          String?
+  industry        String?
+  description     String?
+  employees       Int?
+  country         String?
+  website         String?
+  logoUrl         String?  @map("logo_url")
+  historyStartDate DateTime? @map("history_start_date")
+  historyEndDate  DateTime? @map("history_end_date")
+  lastFetchedAt   DateTime? @map("last_fetched_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("stock_metadata")
+}
+
+// ============================================
+// PORTFOLIO PERFORMANCE HISTORY
+// ============================================
+
+model PortfolioSnapshot {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  date        DateTime @db.Date
+  totalValue  Float    @map("total_value")
+  totalCost   Float    @map("total_cost")
+  dayGain     Float    @map("day_gain")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@index([userId, date(sort: Desc)])
+  @@map("portfolio_snapshots")
 }

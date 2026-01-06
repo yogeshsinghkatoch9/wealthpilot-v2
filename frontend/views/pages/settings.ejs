@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>WealthPilot Pro - Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4850e5",
+            "background-dark": "#111221",
+            "card-dark": "#1a1c2e",
+            "border-dark": "#2d2f45",
+            "text-secondary": "#9e9fb7",
+            "accent-green": "#0bda65",
+            "accent-red": "#ef4444",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background-dark text-white font-display overflow-hidden">
+  <div class="flex h-screen w-full">
+
+    <!-- Side Navigation -->
+    <aside class="hidden md:flex flex-col w-72 h-full border-r border-border-dark bg-[#111217] p-6 justify-between flex-shrink-0">
+      <div class="flex flex-col gap-8">
+        <div class="flex items-center gap-3 px-2">
+          <div class="bg-primary/20 p-2 rounded-lg">
+            <span class="material-symbols-outlined text-primary text-3xl">token</span>
+          </div>
+          <div class="flex flex-col">
+            <h1 class="text-white text-xl font-bold leading-tight">WealthPilot</h1>
+            <p class="text-text-secondary text-xs font-medium tracking-wider uppercase">Pro Edition</p>
+          </div>
+        </div>
+        <nav class="flex flex-col gap-2">
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/dashboard">
+            <span class="material-symbols-outlined text-[24px]">dashboard</span>
+            <span class="text-sm font-semibold">Dashboard</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/holdings">
+            <span class="material-symbols-outlined text-[24px]">work</span>
+            <span class="text-sm font-semibold">Holdings</span>
+          </a>
+          <a class="flex items-center gap-4 px-4 py-3 rounded-xl text-text-secondary hover:bg-white/5 hover:text-white transition-all" href="/watchlist">
+            <span class="material-symbols-outlined text-[24px]">visibility</span>
+            <span class="text-sm font-semibold">Watchlist</span>
+          </a>
+        </nav>
+      </div>
+      <div class="flex flex-col gap-4">
+        <a class="flex items-center gap-4 px-4 py-3 rounded-xl bg-primary text-white shadow-lg shadow-primary/20" href="/settings">
+          <span class="material-symbols-outlined text-[24px]">settings</span>
+          <span class="text-sm font-semibold">Settings</span>
+        </a>
+        <div class="h-px w-full bg-border-dark"></div>
+        <div class="flex items-center gap-3 px-2 py-2">
+          <div class="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+            <%= (user?.firstName || user?.email || 'U').charAt(0).toUpperCase() %>
+          </div>
+          <div class="flex flex-col overflow-hidden">
+            <span class="text-white text-sm font-bold truncate"><%= user?.firstName || user?.email %></span>
+            <span class="text-text-secondary text-xs truncate">Premium Plan</span>
+          </div>
+          <a href="/logout" class="ml-auto text-text-secondary hover:text-white">
+            <span class="material-symbols-outlined">logout</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+      <header class="flex items-center justify-between px-6 py-5 md:px-8 border-b border-border-dark bg-background-dark/80 backdrop-blur-md sticky top-0 z-20">
+        <div class="flex flex-col">
+          <h2 class="text-2xl font-bold text-white tracking-tight">Settings</h2>
+          <p class="text-text-secondary text-sm">Manage your account preferences</p>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto p-6 md:p-8">
+        <div class="max-w-2xl mx-auto flex flex-col gap-6">
+
+          <!-- Profile Section -->
+          <div class="bg-card-dark border border-border-dark rounded-2xl p-6">
+            <h3 class="text-lg font-bold text-white mb-4">Profile</h3>
+            <div class="flex items-center gap-4 mb-6">
+              <div class="h-16 w-16 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-2xl">
+                <%= (user?.firstName || user?.email || 'U').charAt(0).toUpperCase() %>
+              </div>
+              <div>
+                <p class="text-white font-bold"><%= user?.firstName %> <%= user?.lastName || '' %></p>
+                <p class="text-text-secondary text-sm"><%= user?.email %></p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="text-sm text-text-secondary">Investment Goal</label>
+                <p class="text-white font-medium capitalize"><%= user?.investmentGoal || 'Not set' %></p>
+              </div>
+              <div>
+                <label class="text-sm text-text-secondary">Risk Tolerance</label>
+                <p class="text-white font-medium capitalize"><%= user?.riskTolerance || 'Not set' %></p>
+              </div>
+              <div>
+                <label class="text-sm text-text-secondary">Primary Currency</label>
+                <p class="text-white font-medium"><%= user?.primaryCurrency || 'USD' %></p>
+              </div>
+              <div>
+                <label class="text-sm text-text-secondary">Member Since</label>
+                <p class="text-white font-medium"><%= new Date(user?.createdAt).toLocaleDateString() %></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="bg-card-dark border border-accent-red/30 rounded-2xl p-6">
+            <h3 class="text-lg font-bold text-accent-red mb-2">Danger Zone</h3>
+            <p class="text-text-secondary text-sm mb-4">Permanently delete your account and all data.</p>
+            <button class="px-4 py-2 border border-accent-red/50 text-accent-red hover:bg-accent-red/10 rounded-lg font-semibold transition-colors">
+              Delete Account
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
